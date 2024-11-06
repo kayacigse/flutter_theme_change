@@ -1,0 +1,208 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool isDarkTheme = false;
+  List<TodoItem> todoItems = [];
+  final TextEditingController _controller = TextEditingController();
+
+  void toggleTheme() {
+    setState(() {
+      isDarkTheme = !isDarkTheme; // Temayı değiştir
+    });
+  }
+
+  void addTodoItem(String item) {
+    if (item.isNotEmpty) {
+      setState(() {
+        todoItems.add(TodoItem(name: item)); // Yeni öğeyi ekle
+      });
+      _controller.clear(); // TextField'ı temizle
+    }
+  }
+
+  void toggleTodoItem(int index) {
+    setState(() {
+      todoItems[index].isChecked = !todoItems[index].isChecked; // Görev durumunu değiştir
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'To-Do List',
+      theme: isDarkTheme ? darkTheme : lightTheme,
+      home: TodoScreen(
+        toggleTheme: toggleTheme,
+        todoItems: todoItems,
+        addTodoItem: addTodoItem,
+        toggleTodoItem: toggleTodoItem,
+        controller: _controller,
+        isDarkTheme: isDarkTheme,
+      ),
+    );
+  }
+
+  // Açık tema ayarları
+  ThemeData get lightTheme {
+    return ThemeData(
+      primarySwatch: Colors.red,
+      brightness: Brightness.light,
+      buttonTheme: ButtonThemeData(
+        buttonColor: Colors.red,
+        textTheme: ButtonTextTheme.primary,
+      ),
+      scaffoldBackgroundColor: Colors.red[50], // Daha açık bir arka plan rengi
+      textTheme: TextTheme(
+        bodyLarge: TextStyle(color: Colors.black, fontFamily: 'Arial'),
+      ),
+    );
+  }
+
+  // Karanlık tema ayarları
+  ThemeData get darkTheme {
+    return ThemeData(
+      primarySwatch: Colors.red,
+      brightness: Brightness.dark,
+      buttonTheme: ButtonThemeData(
+        buttonColor: Colors.blueGrey,
+        textTheme: ButtonTextTheme.primary,
+      ),
+      scaffoldBackgroundColor: Colors.black,
+      textTheme: TextTheme(
+        bodyLarge: TextStyle(color: Colors.white, fontFamily: 'Noto'),
+      ),
+    );
+  }
+}
+
+class TodoItem {
+  final String name;
+  bool isChecked;
+
+  TodoItem({required this.name, this.isChecked = false}); // Constructor
+}
+
+class TodoScreen extends StatelessWidget {
+  final Function toggleTheme;
+  final List<TodoItem> todoItems;
+  final Function(String) addTodoItem; // Yeni öğe ekleme fonksiyonu
+  final Function(int) toggleTodoItem; // Görev durumunu değiştirme fonksiyonu
+  final TextEditingController controller; // Text editing controller
+  final bool isDarkTheme; // Temanın durumunu tutan değişken
+
+  const TodoScreen({
+    Key? key,
+    required this.toggleTheme,
+    required this.todoItems,
+    required this.addTodoItem,
+    required this.toggleTodoItem,
+    required this.controller,
+    required this.isDarkTheme,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('To-Do App'),
+        backgroundColor: Colors.red[400],
+        actions: [
+          IconButton(
+            icon: Icon(Icons.brightness_6_rounded),
+            onPressed: () => toggleTheme(),
+          ),
+        ],
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isDarkTheme
+                ? [Colors.black, Colors.grey[850]!]
+                : [Colors.red[50]!, Colors.red[100]!],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                itemCount: todoItems.length,
+                itemBuilder: (context, index) {
+                  return Card(
+                    margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    elevation: 4,
+                    child: ListTile(
+                      leading: Transform.scale(
+                        scale: 1.5,
+                        child: Checkbox(
+                          value: todoItems[index].isChecked,
+                          onChanged: (bool? value) {
+                            toggleTodoItem(index);
+                          },
+                        ),
+                      ),
+                      title: Text(
+                        todoItems[index].name,
+                        style: TextStyle(
+                          fontSize: 22,
+                          color: isDarkTheme ? Colors.white : Colors.black,
+                          decoration: todoItems[index].isChecked
+                              ? TextDecoration.lineThrough
+                              : TextDecoration.none,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(30.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        labelText: 'Add New To-Do',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                      ),
+                      onSubmitted: (value) {
+                        addTodoItem(value); // Enter tuşuna basıldığında yeni öğeyi ekle
+                      },
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      addTodoItem(controller.text);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      padding: EdgeInsets.all(16),
+                    ),
+                    child: Icon(Icons.add),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
